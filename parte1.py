@@ -129,37 +129,28 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
         f1 = f(x1)
         f2 = f(x2)
 
-        h0 = x1 - x0
-        h1 = x2 - x1
-        
-        if h0 == 0 or h1 == 0:
+        c = f2
+        denom_comun = (x0 - x1) * (x0 - x2) * (x1 - x2)
+        if denom_comun == 0:
             return x2, erk, k, conv
 
-        d0 = (f1 - f0) / h0
-        d1 = (f2 - f1) / h1
+        b = ((x0 - x2)**2 * (f1 - f2) - (x1 - x2)**2 * (f0 - f2)) / denom_comun
+        a = ((x1 - x2) * (f0 - f2) - (x0 - x2) * (f1 - f2)) / denom_comun
 
-        a = (d1 - d0) / (h1 + h0)
-        b = a * h1 + d1
-        c = f2
-
-        discriminante = (b**2 - 4 * a * c)**0.5
-        
-        # Signo que maximice el denominador para evitar divisiones inestables
-        if abs(b + discriminante) > abs(b - discriminante):
-            denominador = b + discriminante
-        else:
-            denominador = b - discriminante
+        # Fórmula: r = x2 - 2c / (b + sgn(b)*sqrt(b^2-4ac))
+        radicando = complex(b**2 - 4 * a * c)
+        raiz_disc = radicando ** 0.5
+        sgn_b = 1 if b >= 0 else -1
+        denominador = b + sgn_b * raiz_disc
+        denominador = denominador.real if isinstance(denominador, complex) else denominador
 
         if denominador == 0:
             return x2, erk, k, conv
 
-        dx = -2 * c / denominador
-        x3 = x2 + dx
-        erk = abs(dx)
+        r = x2 - 2 * c / denominador
+        erk = abs(r - x2)
 
-        x0 = x1
-        x1 = x2
-        x2 = x3
+        x0, x1, x2 = x1, x2, r
 
         if erk < tolerancia:
             conv = 1
