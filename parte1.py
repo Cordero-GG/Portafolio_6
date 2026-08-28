@@ -12,9 +12,23 @@ def derivar_funciones(funcion_str):
     expr = sp.sympify(funcion_str)
     return sp.diff(expr, x)
 
+def crear_funcion_numerica(funcion_str):
+    """Convierte la cadena de texto en una función numérica rápida."""
+    x = sp.Symbol('x')
+    expr = sp.sympify(funcion_str)
+    return sp.lambdify(x, expr, "numpy")
+
+def crear_derivada_numerica(funcion_str):
+    """Deriva simbólicamente y convierte el resultado en función numérica rápida."""
+    x = sp.Symbol('x')
+    expr = sp.sympify(funcion_str)
+    derivada = sp.diff(expr, x)
+    return sp.lambdify(x, derivada, "numpy")
+
 #Newton-Raphson
 def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
-    derivada_str = str(derivar_funciones(funcion_str))
+    f = crear_funcion_numerica(funcion_str)
+    fp = crear_derivada_numerica(funcion_str)
     k = 0
     conv = 0
     xk = float(x0) #estimacion actual
@@ -22,8 +36,8 @@ def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
 
     while k <maxiIteraciones:
         k += 1
-        funcionEvaluada = evaluar_f(funcion_str, xk)
-        derivadaEvaluada = evaluar_f(derivada_str, xk)
+        funcionEvaluada = f(xk)
+        derivadaEvaluada = fp(xk)
         if derivadaEvaluada == 0:
             return xk, erk, k, conv
         
@@ -38,6 +52,7 @@ def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
 
 # 2. Secante
 def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     x0 = float(x0)
@@ -46,8 +61,8 @@ def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        f_x0 = evaluar_f(funcion_str, x0)
-        f_x1 = evaluar_f(funcion_str, x1)
+        f_x0 = f(x0)
+        f_x1 = f(x1)
 
         # Evitar división por cero
         denominador = f_x1 - f_x0
@@ -70,6 +85,7 @@ def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
 
 # 3. Steffensen
 def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     xk = float(x0)
@@ -77,10 +93,10 @@ def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        funcionEvaluada = evaluar_f(funcion_str, xk)
+        funcionEvaluada = f(xk)
         
         # Se evalúa f en el punto desplazado (xk + f(xk))
-        funcionDesplazada = evaluar_f(funcion_str, xk + funcionEvaluada)
+        funcionDesplazada = f(xk + funcionEvaluada)
         
         denominador = funcionDesplazada - funcionEvaluada
         if denominador == 0:
@@ -99,6 +115,7 @@ def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
 
 # 4. Müller
 def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     x0 = float(x0)
@@ -108,9 +125,9 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        f0 = evaluar_f(funcion_str, x0)
-        f1 = evaluar_f(funcion_str, x1)
-        f2 = evaluar_f(funcion_str, x2)
+        f0 = f(x0)
+        f1 = f(x1)
+        f2 = f(x2)
 
         h0 = x1 - x0
         h1 = x2 - x1
@@ -153,12 +170,13 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
 
 # 5. Bisección
 def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     a = float(a)
     b = float(b)
-    fa = evaluar_f(funcion_str, a)
-    fb = evaluar_f(funcion_str, b)
+    fa = f(a)
+    fb = f(b)
 
     if fa * fb >= 0:
         return None, None, 0, 0  
@@ -169,7 +187,7 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
     while k < maxiIteraciones:
         k += 1
         xksiguiente = (a + b) / 2.0
-        funcionEvaluada = evaluar_f(funcion_str, xksiguiente)
+        funcionEvaluada = f(xksiguiente)
 
         if k > 1:
             erk = abs(xksiguiente - xk)
@@ -192,12 +210,13 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
 
 # 6. Falsa Posición
 def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     a = float(a)
     b = float(b)
-    fa = evaluar_f(funcion_str, a)
-    fb = evaluar_f(funcion_str, b)
+    fa = f(a)
+    fb = f(b)
 
     if fa * fb >= 0:
         return None, None, 0, 0  
@@ -211,7 +230,7 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
             return xk, erk, k, conv
 
         xksiguiente = b - (fb * (b - a)) / denominador
-        funcionEvaluada = evaluar_f(funcion_str, xksiguiente)
+        funcionEvaluada = f(xksiguiente)
 
         if k > 1:
             erk = abs(xksiguiente - xk)
