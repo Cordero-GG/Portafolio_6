@@ -170,7 +170,7 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
     fb = f(b)
 
     if fa * fb >= 0:
-        return None, None, 0, 0  
+        return None, None, None, 0
 
     xk = a
     erk = float('inf')
@@ -210,7 +210,7 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
     fb = f(b)
 
     if fa * fb >= 0:
-        return None, None, 0, 0  
+        return None, None, None, 0
     xk = a
     erk = float('inf')
 
