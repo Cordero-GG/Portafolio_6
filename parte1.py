@@ -12,9 +12,23 @@ def derivar_funciones(funcion_str):
     expr = sp.sympify(funcion_str)
     return sp.diff(expr, x)
 
+def crear_funcion_numerica(funcion_str):
+    """Convierte la cadena de texto en una función numérica rápida."""
+    x = sp.Symbol('x')
+    expr = sp.sympify(funcion_str)
+    return sp.lambdify(x, expr, "numpy")
+
+def crear_derivada_numerica(funcion_str):
+    """Deriva simbólicamente y convierte el resultado en función numérica rápida."""
+    x = sp.Symbol('x')
+    expr = sp.sympify(funcion_str)
+    derivada = sp.diff(expr, x)
+    return sp.lambdify(x, derivada, "numpy")
+
 #Newton-Raphson
 def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
-    derivada_str = str(derivar_funciones(funcion_str))
+    f = crear_funcion_numerica(funcion_str)
+    fp = crear_derivada_numerica(funcion_str)
     k = 0
     conv = 0
     xk = float(x0) #estimacion actual
@@ -22,8 +36,8 @@ def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
 
     while k <maxiIteraciones:
         k += 1
-        funcionEvaluada = evaluar_f(funcion_str, xk)
-        derivadaEvaluada = evaluar_f(derivada_str, xk)
+        funcionEvaluada = f(xk)
+        derivadaEvaluada = fp(xk)
         if derivadaEvaluada == 0:
             return xk, erk, k, conv
         
@@ -38,6 +52,7 @@ def newton_raphson(funcion_str, x0, maxiIteraciones, tolerancia):
 
 # 2. Secante
 def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     x0 = float(x0)
@@ -46,8 +61,8 @@ def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        f_x0 = evaluar_f(funcion_str, x0)
-        f_x1 = evaluar_f(funcion_str, x1)
+        f_x0 = f(x0)
+        f_x1 = f(x1)
 
         # Evitar división por cero
         denominador = f_x1 - f_x0
@@ -70,6 +85,7 @@ def secante(funcion_str, x0, x1, maxiIteraciones, tolerancia):
 
 # 3. Steffensen
 def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     xk = float(x0)
@@ -77,10 +93,10 @@ def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        funcionEvaluada = evaluar_f(funcion_str, xk)
+        funcionEvaluada = f(xk)
         
         # Se evalúa f en el punto desplazado (xk + f(xk))
-        funcionDesplazada = evaluar_f(funcion_str, xk + funcionEvaluada)
+        funcionDesplazada = f(xk + funcionEvaluada)
         
         denominador = funcionDesplazada - funcionEvaluada
         if denominador == 0:
@@ -99,6 +115,7 @@ def steffensen(funcion_str, x0, maxiIteraciones, tolerancia):
 
 # 4. Müller
 def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     x0 = float(x0)
@@ -108,41 +125,32 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
 
     while k < maxiIteraciones:
         k += 1
-        f0 = evaluar_f(funcion_str, x0)
-        f1 = evaluar_f(funcion_str, x1)
-        f2 = evaluar_f(funcion_str, x2)
+        f0 = f(x0)
+        f1 = f(x1)
+        f2 = f(x2)
 
-        h0 = x1 - x0
-        h1 = x2 - x1
-        
-        if h0 == 0 or h1 == 0:
+        c = f2
+        denom_comun = (x0 - x1) * (x0 - x2) * (x1 - x2)
+        if denom_comun == 0:
             return x2, erk, k, conv
 
-        d0 = (f1 - f0) / h0
-        d1 = (f2 - f1) / h1
+        b = ((x0 - x2)**2 * (f1 - f2) - (x1 - x2)**2 * (f0 - f2)) / denom_comun
+        a = ((x1 - x2) * (f0 - f2) - (x0 - x2) * (f1 - f2)) / denom_comun
 
-        a = (d1 - d0) / (h1 + h0)
-        b = a * h1 + d1
-        c = f2
-
-        discriminante = (b**2 - 4 * a * c)**0.5
-        
-        # Signo que maximice el denominador para evitar divisiones inestables
-        if abs(b + discriminante) > abs(b - discriminante):
-            denominador = b + discriminante
-        else:
-            denominador = b - discriminante
+        # Fórmula: r = x2 - 2c / (b + sgn(b)*sqrt(b^2-4ac))
+        radicando = complex(b**2 - 4 * a * c)
+        raiz_disc = radicando ** 0.5
+        sgn_b = 1 if b >= 0 else -1
+        denominador = b + sgn_b * raiz_disc
+        denominador = denominador.real if isinstance(denominador, complex) else denominador
 
         if denominador == 0:
             return x2, erk, k, conv
 
-        dx = -2 * c / denominador
-        x3 = x2 + dx
-        erk = abs(dx)
+        r = x2 - 2 * c / denominador
+        erk = abs(r - x2)
 
-        x0 = x1
-        x1 = x2
-        x2 = x3
+        x0, x1, x2 = x1, x2, r
 
         if erk < tolerancia:
             conv = 1
@@ -153,15 +161,16 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
 
 # 5. Bisección
 def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     a = float(a)
     b = float(b)
-    fa = evaluar_f(funcion_str, a)
-    fb = evaluar_f(funcion_str, b)
+    fa = f(a)
+    fb = f(b)
 
     if fa * fb >= 0:
-        return None, None, 0, 0  
+        return None, None, None, 0
 
     xk = a
     erk = float('inf')
@@ -169,7 +178,7 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
     while k < maxiIteraciones:
         k += 1
         xksiguiente = (a + b) / 2.0
-        funcionEvaluada = evaluar_f(funcion_str, xksiguiente)
+        funcionEvaluada = f(xksiguiente)
 
         if k > 1:
             erk = abs(xksiguiente - xk)
@@ -192,15 +201,16 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
 
 # 6. Falsa Posición
 def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
+    f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
     a = float(a)
     b = float(b)
-    fa = evaluar_f(funcion_str, a)
-    fb = evaluar_f(funcion_str, b)
+    fa = f(a)
+    fb = f(b)
 
     if fa * fb >= 0:
-        return None, None, 0, 0  
+        return None, None, None, 0
     xk = a
     erk = float('inf')
 
@@ -211,7 +221,7 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
             return xk, erk, k, conv
 
         xksiguiente = b - (fb * (b - a)) / denominador
-        funcionEvaluada = evaluar_f(funcion_str, xksiguiente)
+        funcionEvaluada = f(xksiguiente)
 
         if k > 1:
             erk = abs(xksiguiente - xk)
