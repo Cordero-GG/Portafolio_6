@@ -118,26 +118,21 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
     f = crear_funcion_numerica(funcion_str)
     k = 0
     conv = 0
-    x0 = float(x0)
-    x1 = float(x1)
-    x2 = float(x2)
+    x0, x1, x2 = float(x0), float(x1), float(x2)
     erk = float('inf')
 
     while k < maxiIteraciones:
         k += 1
-        f0 = f(x0)
-        f1 = f(x1)
-        f2 = f(x2)
-
+        f0, f1, f2 = f(x0), f(x1), f(x2)
         c = f2
         denom_comun = (x0 - x1) * (x0 - x2) * (x1 - x2)
+        
         if denom_comun == 0:
             return x2, erk, k, conv
 
         b = ((x0 - x2)**2 * (f1 - f2) - (x1 - x2)**2 * (f0 - f2)) / denom_comun
         a = ((x1 - x2) * (f0 - f2) - (x0 - x2) * (f1 - f2)) / denom_comun
 
-        # Fórmula: r = x2 - 2c / (b + sgn(b)*sqrt(b^2-4ac))
         radicando = complex(b**2 - 4 * a * c)
         raiz_disc = radicando ** 0.5
         sgn_b = 1 if b >= 0 else -1
@@ -149,9 +144,11 @@ def muller(funcion_str, x0, x1, x2, maxiIteraciones, tolerancia):
 
         r = x2 - 2 * c / denominador
         erk = abs(r - x2)
-
-        x0, x1, x2 = x1, x2, r
-
+        # Ordeno los puntos viejos para ver los que están más cerca de r
+        puntos_viejos = sorted([x0, x1, x2], key=lambda x: abs(x - r))
+        # Los 2 más cercanos y x2 pasa a ser la nueva raíz
+        x0, x1 = puntos_viejos[0], puntos_viejos[1]
+        x2 = r
         if erk < tolerancia:
             conv = 1
             break
@@ -169,29 +166,32 @@ def biseccion(funcion_str, a, b, maxiIteraciones, tolerancia):
     fa = f(a)
     fb = f(b)
 
-    if fa * fb >= 0:
+    #Si la raíz está en los extremos
+    if fa == 0:
+        return a, 0.0, 0, 1
+    if fb == 0:
+        return b, 0.0, 0, 1
+
+    # Si no hay cambio de signo no se garantiza la convergencia
+    if fa * fb > 0:
         return None, None, None, 0
 
+    #Inicia el ciclo
     xk = a
     erk = float('inf')
 
     while k < maxiIteraciones:
         k += 1
-        xksiguiente = (a + b) / 2.0
-        funcionEvaluada = f(xksiguiente)
-
-        if k > 1:
-            erk = abs(xksiguiente - xk)
-            if erk < tolerancia or abs(funcionEvaluada) < tolerancia:
-                conv = 1
-                xk = xksiguiente
-                break
-
-        xk = xksiguiente
-
+        xk = (a + b) / 2.0
+        funcionEvaluada = f(xk)
+        erk = abs(funcionEvaluada)
+        if erk < tolerancia:
+            conv = 1
+            break
+        #nuevo intervalo
         if fa * funcionEvaluada < 0:
             b = xk
-            fb = funcionEvaluada
+            fb = funcionEvaluada 
         else:
             a = xk
             fa = funcionEvaluada
@@ -209,8 +209,15 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
     fa = f(a)
     fb = f(b)
 
-    if fa * fb >= 0:
+    #Si la raíz exacta está en los bordes
+    if fa == 0:
+        return a, 0.0, 0, 1
+    if fb == 0:
+        return b, 0.0, 0, 1
+    #Si no hay cambio de signo
+    if fa * fb > 0:
         return None, None, None, 0
+    #Ciclo iterativo
     xk = a
     erk = float('inf')
 
@@ -219,19 +226,16 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
         denominador = fb - fa
         if denominador == 0:
             return xk, erk, k, conv
-
-        xksiguiente = b - (fb * (b - a)) / denominador
-        funcionEvaluada = f(xksiguiente)
-
-        if k > 1:
-            erk = abs(xksiguiente - xk)
-            if erk < tolerancia or abs(funcionEvaluada) < tolerancia:
-                conv = 1
-                xk = xksiguiente
-                break
-
-        xk = xksiguiente
-
+            
+        # Fórmula de la secante para nuevo punto
+        xk = b - (fb * (b - a)) / denominador
+        funcionEvaluada = f(xk)
+        erk = abs(funcionEvaluada)
+        
+        if erk < tolerancia:
+            conv = 1
+            break
+        #nuevo subintervalo
         if fa * funcionEvaluada < 0:
             b = xk
             fb = funcionEvaluada
@@ -239,4 +243,4 @@ def falsa_posicion(funcion_str, a, b, maxiIteraciones, tolerancia):
             a = xk
             fa = funcionEvaluada
 
-    return xk, erk, k, conv    
+    return xk, erk, k, conv  
