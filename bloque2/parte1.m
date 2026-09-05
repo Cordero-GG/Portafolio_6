@@ -1,4 +1,14 @@
-1;
+function M = parte1()
+  M.eliminacion_gaussiana = @eliminacion_gaussiana;
+  M.factorizacion_LU      = @factorizacion_LU;
+  M.cholesky              = @cholesky;
+  M.factorizacion_QR      = @factorizacion_QR;
+  M.metodo_thomas         = @metodo_thomas;
+  M.jacobi                = @jacobi;
+  M.gauss_seidel          = @gauss_seidel;
+  M.gradiente_conjugado   = @gradiente_conjugado;
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 1. Eliminacion gaussiana
