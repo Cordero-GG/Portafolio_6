@@ -257,8 +257,8 @@ printf('(2) TIEMPOS DE EJECUCION\n');
 printf('    El metodo mas rapido fue %s (%.4f s) y el mas lento %s (%.4f s).\n', ...
        nombres{jmin}, tmin, nombres{jmax}, tmax);
 printf('    El orden observado es coherente con el costo teorico de cada algoritmo: Thomas es O(n),\n');
-printf('    los metodos directos generales (Gauss, LU, Cholesky, QR) son O(n^3) -con Cholesky a la\n');
-printf('    mitad del costo de LU y QR como el mas caro de los cuatro-, y el costo de los iterativos\n');
+printf('    los metodos directos generales (Gauss, LU, Cholesky, QR) son O(n^3), aunque en la\n');
+printf('    practica QR resulto el mas rapido de los cuatro (%.4f s) por estar vectorizado; el costo de los iterativos\n', tej(4));
 printf('    es O(k*n^2) al trabajar con la matriz llena, es decir, depende del numero de iteraciones\n');
 printf('    y no solo del tamano del sistema.\n\n');
 
@@ -345,7 +345,7 @@ printf('    tridiagonal que la discretizacion por diferencias finitas produce de
 printf('    sistema fuera mucho mayor o se almacenara en formato disperso, el gradiente conjugado\n');
 printf('    seria la alternativa recomendable, pues explota la simetria definida positiva de A y\n');
 printf('    alcanza una buena aproximacion en un numero de iteraciones mucho menor que Jacobi o\n');
-printf('    Gauss-Seidel. La factorizacion QR, en cambio, es la opcion menos conveniente aqui: es la\n');
-printf('    mas costosa de las directas y no aporta ninguna ventaja para un sistema cuadrado, bien\n');
-printf('    condicionado y con esta estructura.\n');
+printf('    Gauss-Seidel. La factorizacion QR, pese a tener el mismo costo teorico O(n^3) que Gauss\n');
+printf('    y LU, resulto en la practica la mas rapida de las cuatro directas generales gracias a\n');
+printf('    estar implementada con operaciones vectorizadas en lugar de ciclos escalares anidados.\n');
 printf('===========================================================================================\n');

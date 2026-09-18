@@ -117,9 +117,9 @@ fprintf('1. Métodos Directos vs. Estructura de la Matriz:\n');
 fprintf('   El Método de Thomas obtiene el menor tiempo de ejecución entre los \n');
 fprintf('   métodos directos. Esto se debe a que la matriz A es tridiagonal, \n');
 fprintf('   y Thomas explota esta estructura reduciendo el costo computacional \n');
-fprintf('   a O(n) operaciones. Por el contrario, la Factorización QR es el \n');
-fprintf('   método más lento, ya que el algoritmo de Gram-Schmidt requiere \n');
-fprintf('   O(n^3) operaciones, ignorando completamente los ceros de la matriz.\n\n');
+fprintf('   a O(n) operaciones. Entre los métodos directos generales, la \n');
+fprintf('   Factorización QR fue en realidad la más rápida (0.4227 s), pese \n');
+fprintf('   a que su costo teórico también es O(n^3), como el de Gauss y LU.\n\n');
 
 fprintf('2. Condiciones de la Matriz A:\n');
 fprintf('   La matriz A es Simétrica Definida Positiva, ya que es \n');
