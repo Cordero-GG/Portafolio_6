@@ -32,9 +32,7 @@ function [As, bs] = triangularizar_gauss(A, b)
   for k = 1:n-1 % columna que se está anulando
     for i = k+1:n % filas debajo del pivote
       m = As(i,k) / As(k,k); % multiplicador
-      for j = k:n
-        As(i,j) = As(i,j) - m*As(k,j);
-      end
+      As(i,k:n) = As(i,k:n) - m*As(k,k:n); % misma operacion fila a fila
       bs(i) = bs(i) - m*bs(k); % misma operacion sobre b
     end
   end
@@ -48,10 +46,7 @@ function x = sustitucion_atras(A, b)
   x = zeros(n, 1);
 
   for i = n:-1:1
-    suma = 0;
-    for j = i+1:n
-      suma = suma + A(i,j)*x(j); % terminos ya conocidos
-    end
+    suma = A(i,i+1:n) * x(i+1:n); % terminos ya conocidos
     x(i) = (b(i) - suma) / A(i,i);
   end
 end
@@ -81,9 +76,7 @@ function [L, U] = fact_LU(A)
     for i = k+1:n % filas debajo del pivote
       m = U(i,k) / U(k,k); % multiplicador
       L(i,k) = m; % se guarda debajo de la diagonal de L
-      for j = k:n
-        U(i,j) = U(i,j) - m*U(k,j);
-      end
+      U(i,k:n) = U(i,k:n) - m*U(k,k:n);
     end
   end
 end
@@ -96,10 +89,7 @@ function y = sustitucion_adelante(L, c)
   y = zeros(n, 1);
 
   for i = 1:n
-    suma = 0;
-    for j = 1:i-1
-      suma = suma + L(i,j)*y(j); % terminos ya conocidos
-    end
+    suma = L(i,1:i-1) * y(1:i-1); % terminos ya conocidos
     y(i) = (c(i) - suma) / L(i,i);
   end
 end
@@ -130,17 +120,11 @@ function L = fact_cholesky(A)
   end
 
   for i = 2:n
-    suma1 = 0;
-    for k = 1:i-1
-      suma1 = suma1 + (L(i,k))^2;
-    end
+    suma1 = L(i,1:i-1) * L(i,1:i-1)'; % suma de los cuadrados de la fila i
     L(i,i) = sqrt(A(i,i) - suma1); % elemento diagonal de la columna i
 
     for j = i+1:n
-      suma2 = 0;
-      for k = 1:i-1
-        suma2 = suma2 + L(j,k)*L(i,k);
-      end
+      suma2 = L(j,1:i-1) * L(i,1:i-1)';
       L(j,i) = (A(j,i) - suma2) / L(i,i); % elementos debajo de la diagonal
     end
   end
@@ -293,7 +277,10 @@ function [xk, erk, k, conv] = gradiente_conjugado(A, b, x0, tol, iterMax)
   k = 0;
   conv = 0;
 
-  while (erk > tol) && (k < iterMax)
+  % se agrega la condicion rk'*rk > 0: si el residuo recursivo llega a ser
+  % exactamente cero, el metodo ya alcanzo la solucion y no existe una nueva
+  % direccion de busqueda (alpha y beta quedarian indefinidos como 0/0)
+  while (erk > tol) && (k < iterMax) && (rk' * rk > 0)
     Apk = A*pk;
     alpha = (rk' * rk) / (pk' * Apk); % tamano de paso optimo
 
