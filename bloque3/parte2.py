@@ -111,41 +111,46 @@ def run_parte2():
     print("="*80)
     analisis = """
 1. ¿Aproximan los mismos valores propios?
-Sí. Los dos métodos tiran la misma distribución de valores propios 
-ordenados de mayor a menor. Ambos le llegan al mismo resultado porque analizan el 
-mismo sistema tridiagonal.
+Aproximadamente, pero no idénticos. Ambos métodos trabajan sobre la misma matriz
+tridiagonal y sus valores propios más grandes quedan cerca de 6 (el mayor valor propio
+exacto es 4 + 2*cos(pi/201) = 5.99976). Sin embargo, como ninguno de los dos alcanzó la
+tolerancia en iterMax, las aproximaciones difieren a partir de la tercera cifra decimal
+y los valores de QR quedan más cerca de los exactos que los de Jacobi.
 
 2. Comportamiento de los residuos
-La fórmula  r_j = ||A * v_j - lambda_j * v_j||_2  mide la aproximación.'A' es la matriz, 'v_j' es el vector propio y 'lambda_j' 
-su valor propio. La teoría nos dice que sobre un vector propio, la matriz actúa 
-como una multiplicación por un escalar (A*v = lambda*v).
-
-La norma 2 (||.||_2) es  medir la distancia de ese error. Por lo general, 
-Jacobi tiene residuos más bajos porque sus rotaciones eliminan a ceros los elementos 
-fuera de la diagonal sin perder precisión. QR, al ser más pesado, acumula un montón de 
-matrices Q, lo que va metiendo basura por los errores de redondeo del sistema.
+La fórmula  r_j = ||A * v_j - lambda_j * v_j||_2  mide qué tan bien se cumple la
+definición A*v = lambda*v para cada par calculado; r_max es el peor de los n residuos.
+En esta corrida QR obtuvo un residuo máximo unas 55 veces menor que Jacobi (del orden
+de 9e-4 contra 5e-2). Esto se debe a que, con el mismo límite de 10000 iteraciones, QR
+aplica una transformación completa a toda la matriz en cada iteración, mientras que
+Jacobi anula un solo elemento por iteración y necesita del orden de n^2 o más rotaciones
+para diagonalizar, por lo que queda más lejos de la solución.
 
 3. Normalización y Ortogonalidad (er_ort)
-Para medir esto usamos  er_ort = ||V^T * V - I||_F. Aquí 'V' son todos los vectores 
-propios amontonados y V^T es su transpuesta. 'I' es la matriz identidad. La norma de Frobenius (||.||_F) es como elevar al cuadrado cada
-campito de la matriz resultante, sumarlos todos y sacarles raíz. 
-
-Esto nos dice qué tan a 90 grados están los vectores entre sí. Jacobi es mejor aquí 
-porque sus rotaciones de Givens mantienen la ortogonalidad. QR vuelve a errar 
-un por lo mismom acumula la matriz V tantas veces ensucia la precisión de la máquina.
+Para medir esto usamos  er_ort = ||V^T * V - I||_F. V es la matriz de vectores propios
+acumulados y I la identidad; la norma de Frobenius es la raíz de la suma de los cuadrados
+de todas las entradas de V^T*V - I. Un valor cercano a cero indica columnas ortonormales.
+Ambos métodos son excelentes en este aspecto (del orden de 1e-13 en QR y 1e-14 en Jacobi)
+porque V es un producto de matrices ortogonales (las Q de QR y las rotaciones de Jacobi).
+Jacobi resulta algo mejor porque cada rotación solo modifica dos columnas de V, pero la
+diferencia es pequeña y no distingue a un método del otro.
 
 4. Iteraciones (k) y Tiempos de ejecución
-Jacobi obliga a buscar el valor máximo fuera de la diagonal en cada iteración. En una matriz grande 
-como esta de 200x200, es muy lento en Python. Por otro lado, QR, aunque haga más iteraciones, se apoya en 
-los métodos de NumPy que están optimizados en código C por debajo. Así que QR termina 
-el trabajo más rápido y es mejor en tiempo a Jacobi, comprobando por qué usamos métodos que 
-trabajan directamente con la matriz para agilizar sistemas inmensos.
+Ambos métodos consumieron las 10000 iteraciones permitidas. Jacobi fue bastante más
+rápido en tiempo total, porque cada una de sus iteraciones solo anula un elemento,
+mientras que cada iteración de QR factoriza toda la matriz de 200x200. Este menor costo
+por iteración no significa que Jacobi sea mejor: como cada iteración es una sola
+rotación, necesita muchas más iteraciones para alcanzar la misma calidad de resultado
+que QR (ver el residuo en el punto 2).
 
 5. Criterios de parada
-Ambos métodos pararon bajo la misma regla: que la diferencia entre la diagonal actual y 
-la anterior sea menor a la tolerancia (er_k < 1e-8). Es decir, el bucle muere cuando a la 
-matriz ya se le acabaron los cambios importantes y sus valores fuera de la diagonal 
-quedaron siendo unos enanos estadísticos.
+Ambos métodos usan la misma regla de parada: que la diferencia entre la diagonal actual
+y la anterior (er_k) sea menor que la tolerancia (1e-8). Ninguno la cumplió: los dos
+terminaron por llegar a iterMax = 10000, por lo que conv = 0 en ambos. Hay que tener
+presente que un er_k pequeño solo indica que la diagonal casi dejó de cambiar y no
+garantiza que el residuo sea pequeño; por eso se calcula también r_max. Con estos
+parámetros las aproximaciones de QR son razonablemente buenas, mientras que las de
+Jacobi son claramente menos precisas.
 """
     print(analisis)
 
